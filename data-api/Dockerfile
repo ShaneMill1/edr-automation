@@ -21,6 +21,7 @@ ENV WoW_CONFIG=/WoW/config/config.yml
 COPY ./start.sh /start.sh
 COPY ./automated_scripts /automated_scripts
 COPY WoW /WoW
+COPY ./ingest_scripts.txt /ingest_scripts.txt
 
 RUN chmod +x /start.sh
 
