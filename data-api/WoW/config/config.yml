@@ -1,0 +1,112 @@
+server:
+    bind:
+        host: 0.0.0.0
+        port: 5000
+    url: http://localhost:5000
+    mimetype: application/json; charset=UTF-8
+    encoding: utf-8
+    language: en-US
+    cors: true
+    pretty_print: true
+    limit: 10
+    templates: ../templates/
+
+logging:
+    level: DEBUG
+    logfile: /media/sf_Transfer/WoW_Data/wow.log
+
+
+groups:
+    US_Models:
+        type: group
+        name: United States Models
+        desc: Automated Ingestion
+        children:
+            - automated_gfs
+            - automated_nam
+
+
+metadata:
+    registry_db: WoW/WMO.sqlite    
+    identification:
+        title: Environmental Data Retrieval API - Automation Demo
+        description: Automation of Collections from Grib Data Sources
+        keywords:
+            - point
+            - polygon
+            - weather
+            - data
+            - api
+        keywords_type: theme
+        terms_of_service: None
+        url: 
+    license:
+#        name: CC-BY 4.0 license
+#        url: https://creativecommons.org/licenses/by/4.0/
+    provider:
+        name: Organization Name
+        url: http://example.org
+    contact:
+        name: Lastname, Firstname
+        position: Position Title
+        address: Mailing Address
+        city: City
+        stateorprovince: Administrative Area
+        postalcode: Zip or Postal Code
+        country: Country
+        phone: +xx-xxx-xxx-xxxx
+        fax: +xx-xxx-xxx-xxxx
+        email: you@example.org
+        url: Contact URL
+        hours: Hours of Service
+        instructions: During hours of service.  Off on weekends.
+        role: pointOfContact
+
+datasets:
+    # underscores are not allowed in dataset identifiers 
+    automated_gfs:
+        name: gfs automated 
+        title: gfs automated
+        description: gfs automated
+        extent:
+            spatial: -180,-89.9,180,89.9 
+        instanceAxes:
+            x:
+                label: Longitude
+                lowerBound: -180
+                upperBound: 180
+                uomLabel: degrees
+            y:
+                label: Latitude
+                lowerBound: -89.9
+                upperBound: 89.9
+                uomLabel: degrees        
+        provider:
+            name: automated_gfs
+            type: automated_ingest
+            model: [gfs_100,gfs_025]
+            cycle: [00z,06z,12z,18z]
+            data_source: /media/sf_Transfer/WoW_Data/collections
+    automated_nam:
+        name: nam automated
+        title: nam automated
+        description: nam automated
+        extent:
+            spatial: -180,-89.9,180,89.9
+        instanceAxes:
+            x:
+                label: Longitude
+                lowerBound: -180
+                upperBound: 180
+                uomLabel: degrees
+            y:
+                label: Latitude
+                lowerBound: -89.9
+                upperBound: 89.9
+                uomLabel: degrees
+        provider:
+            name: automated_nam
+            type: automated_ingest
+            model: [nam_32km]
+            cycle: [00z,06z,12z,18z]
+            data_source: /media/sf_Transfer/WoW_Data/collections

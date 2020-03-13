@@ -1,0 +1,49 @@
+[2020-03-13T21:20:33Z] {/WoW/log.py:68} DEBUG - Logging initialized
+[2020-03-13T21:20:33Z] {/usr/local/lib/python3.7/site-packages/werkzeug/_internal.py:113} INFO -  * Running on http://0.0.0.0:5300/ (Press CTRL+C to quit)
+[2020-03-13T21:25:17Z] {/WoW/log.py:68} DEBUG - Logging initialized
+[2020-03-13T21:25:17Z] {/usr/local/lib/python3.7/site-packages/werkzeug/_internal.py:113} INFO -  * Running on http://0.0.0.0:5300/ (Press CTRL+C to quit)
+[2020-03-13T21:43:49Z] {/WoW/log.py:68} DEBUG - Logging initialized
+[2020-03-13T21:43:49Z] {/usr/local/lib/python3.7/site-packages/werkzeug/_internal.py:113} INFO -  * Running on http://0.0.0.0:5300/ (Press CTRL+C to quit)
+[2020-03-13T21:58:52Z] {/WoW/log.py:68} DEBUG - Logging initialized
+[2020-03-13T21:58:52Z] {/usr/local/lib/python3.7/site-packages/werkzeug/_internal.py:113} INFO -  * Running on http://0.0.0.0:5000/ (Press CTRL+C to quit)
+[2020-03-13T21:58:53Z] {/usr/local/lib/python3.7/site-packages/werkzeug/_internal.py:113} INFO - 172.17.0.1 - - [13/Mar/2020 21:58:53] "[37mHEAD / HTTP/1.1[0m" 200 -
+[2020-03-13T21:58:53Z] {/usr/local/lib/python3.7/site-packages/werkzeug/_internal.py:113} INFO - 172.17.0.1 - - [13/Mar/2020 21:58:53] "[37mHEAD / HTTP/1.1[0m" 200 -
+[2020-03-13T21:58:57Z] {/usr/local/lib/python3.7/site-packages/werkzeug/_internal.py:113} INFO - 172.17.0.1 - - [13/Mar/2020 21:58:57] "[37mGET / HTTP/1.1[0m" 200 -
+[2020-03-13T21:58:57Z] {/usr/local/lib/python3.7/site-packages/werkzeug/_internal.py:113} INFO - 172.17.0.1 - - [13/Mar/2020 21:58:57] "[37mGET /static/css/default.css HTTP/1.1[0m" 200 -
+[2020-03-13T21:58:57Z] {/usr/local/lib/python3.7/site-packages/werkzeug/_internal.py:113} INFO - 172.17.0.1 - - [13/Mar/2020 21:58:57] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+[2020-03-13T22:14:13Z] {/WoW/log.py:68} DEBUG - Logging initialized
+[2020-03-13T22:14:46Z] {/WoW/log.py:68} DEBUG - Logging initialized
+[2020-03-13T22:25:41Z] {/WoW/log.py:68} DEBUG - Logging initialized
+[2020-03-13T22:25:41Z] {/usr/local/lib/python3.7/site-packages/werkzeug/_internal.py:113} INFO -  * Running on http://0.0.0.0:5000/ (Press CTRL+C to quit)
+[2020-03-13T22:25:43Z] {/usr/local/lib/python3.7/site-packages/werkzeug/_internal.py:113} INFO - 172.17.0.1 - - [13/Mar/2020 22:25:43] "[37mGET / HTTP/1.1[0m" 200 -
+[2020-03-13T22:25:54Z] {/usr/local/lib/python3.7/site-packages/werkzeug/_internal.py:113} INFO - 172.17.0.1 - - [13/Mar/2020 22:25:54] "[37mGET /groups?outputFormat=html HTTP/1.1[0m" 200 -
+[2020-03-13T22:25:55Z] {/usr/local/lib/python3.7/site-packages/werkzeug/_internal.py:113} INFO - 172.17.0.1 - - [13/Mar/2020 22:25:55] "[37mGET /groups?outputFormat=application%2Fjson HTTP/1.1[0m" 200 -
+[2020-03-13T22:25:59Z] {/usr/local/lib/python3.7/site-packages/werkzeug/_internal.py:113} INFO - 172.17.0.1 - - [13/Mar/2020 22:25:59] "[37mGET /groups/US_Models?outputFormat=application%2Fjson HTTP/1.1[0m" 200 -
+[2020-03-13T22:26:06Z] {/usr/local/lib/python3.7/site-packages/flask/app.py:1891} ERROR - Exception on /groups/US_Models/automated_gfs [GET]
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.7/site-packages/flask/app.py", line 2446, in wsgi_app
+    response = self.full_dispatch_request()
+  File "/usr/local/lib/python3.7/site-packages/flask/app.py", line 1951, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+  File "/usr/local/lib/python3.7/site-packages/flask_cors/extension.py", line 161, in wrapped_function
+    return cors_after_request(app.make_response(f(*args, **kwargs)))
+  File "/usr/local/lib/python3.7/site-packages/flask/app.py", line 1820, in handle_user_exception
+    reraise(exc_type, exc_value, tb)
+  File "/usr/local/lib/python3.7/site-packages/flask/_compat.py", line 39, in reraise
+    raise value
+  File "/usr/local/lib/python3.7/site-packages/flask/app.py", line 1949, in full_dispatch_request
+    rv = self.dispatch_request()
+  File "/usr/local/lib/python3.7/site-packages/flask/app.py", line 1935, in dispatch_request
+    return self.view_functions[rule.endpoint](**req.view_args)
+  File "/WoW/wow_point_server.py", line 48, in groups
+    request.headers, request.args, subpath)
+  File "/WoW/api.py", line 179, in describe_group
+    if co_link[3]['href'].find('collection') > -1:
+KeyError: 3
+[2020-03-13T22:26:06Z] {/usr/local/lib/python3.7/site-packages/werkzeug/_internal.py:113} INFO - 172.17.0.1 - - [13/Mar/2020 22:26:06] "[35m[1mGET /groups/US_Models/automated_gfs?outputFormat=application%2Fjson HTTP/1.1[0m" 500 -
+[2020-03-13T22:26:09Z] {/usr/local/lib/python3.7/site-packages/werkzeug/_internal.py:113} INFO - 172.17.0.1 - - [13/Mar/2020 22:26:09] "[37mGET /groups/US_Models/automated_gfs?outputFormat=application%2Fjson HTTP/1.1[0m" 200 -
+[2020-03-13T22:26:12Z] {/usr/local/lib/python3.7/site-packages/werkzeug/_internal.py:113} INFO - 172.17.0.1 - - [13/Mar/2020 22:26:12] "[37mGET /collections/automated_gfs?outputFormat=application%2Fjson HTTP/1.1[0m" 200 -
+[2020-03-13T22:26:15Z] {/usr/local/lib/python3.7/site-packages/werkzeug/_internal.py:113} INFO - 172.17.0.1 - - [13/Mar/2020 22:26:15] "[37mGET /collections/automated_gfs_100/00z?outputFormat=application%2Fjson HTTP/1.1[0m" 200 -
+[2020-03-13T22:26:29Z] {/usr/local/lib/python3.7/site-packages/werkzeug/_internal.py:113} INFO - 172.17.0.1 - - [13/Mar/2020 22:26:29] "[37mGET /groups/US_Models/automated_nam?outputFormat=application%2Fjson HTTP/1.1[0m" 200 -
+[2020-03-13T22:26:33Z] {/usr/local/lib/python3.7/site-packages/werkzeug/_internal.py:113} INFO - 172.17.0.1 - - [13/Mar/2020 22:26:33] "[37mGET /collections/automated_nam?outputFormat=application%2Fjson HTTP/1.1[0m" 200 -
+[2020-03-13T22:26:42Z] {/usr/local/lib/python3.7/site-packages/werkzeug/_internal.py:113} INFO - 172.17.0.1 - - [13/Mar/2020 22:26:42] "[37mGET /collections/automated_nam_32km/00z?outputFormat=application%2Fjson HTTP/1.1[0m" 200 -

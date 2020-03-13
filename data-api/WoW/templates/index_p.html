@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<meta charset="UTF-8">
+<html lang="en">
+<head>
+    <title>Example query tool</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/mini.css/3.0.1/mini-default.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/leaflet.css">
+    <link rel="stylesheet" type="text/css"
+        href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/leaflet-coverage@0.7/leaflet-coverage.css">
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/c3/0.4.11/c3.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.8.0/d3.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/c3/0.6.12/c3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.5.1/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.5.0/proj4.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4leaflet/1.0.2/proj4leaflet.min.js"></script>
+    <script src="{{ config['server']['url'] }}/static/js/covutils.src.js"></script>
+    <script src="{{ config['server']['url'] }}/static/js/leaflet-coverage.src.js"></script>
+    <script src="https://cdn.jsdelivr.net/covjson-reader/0.16/covjson-reader.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/wicket/1.3.4/wicket.min.js"></script>
+
+    
+    <style>
+        html,body,#map,.container
+        {
+            width: 100%;
+            height: 100%;
+        }
+        #trow
+        {
+            width: 100%;
+            height: 8%;
+        }
+        #qrow
+        {
+            width: 100%;
+            height: 85%;
+        }
+        #query-view
+        {
+            width: 100%;
+            height: 100%;
+        }
+        #urow
+        {
+            width: 100%;
+            height: 7%;
+        }
+        #frow
+        {
+            width: 100%;
+            height: 90%;
+            overflow-y: scroll;   
+        }
+        #formfields
+        {
+            width: 100%;
+            height: 100%;
+        }        
+        #brow
+        {
+            width: 100%;
+            height: 10%;
+        }
+        #dcontainer
+        {
+            width: 100%;
+            height: 90%;
+        }                   
+        #pnames
+        {
+            overflow-y: scroll;
+            min-height: 25%;  
+            max-height: 40%;   
+        }
+    </style>
+
+</head>
+
+<body>
+    <div class="container">
+        <div class="row" id="title-row">
+            <div class="col-sm-10">
+                <h2 id="col_title"></h2>
+            </div>
+            <div class="col-sm-2"><span class="tooltip" aria-label="User guide for this page" style="left: 50%;"><a href="../../../static/html/userguide.html"><h2>Help</h2></a></span></div>
+        </div>
+        <div id="qrow" class="row" >    
+            <div class="col-sm-8" id="query-view" >
+
+            <img style="display:none" src="http://labs.metoffice.gov.uk/map/loader.gif" alt="loading..." id="loading_wheel" />
+            <div id='map'></div>
+            </div>
+            <div class="col-sm-4" id="query-view">
+                <div  id="dcontainer">
+                    <div id="frow">
+
+                        <legend id="formlegend">Point query</legend>
+                        <div id="formfields"></div>                                          
+
+                    </div>
+                    <div id="brow">
+                        <button class="tertiary" onclick="getData();">Get Data</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="urow" class="row" id="url-row">
+            <div class="col-sm-1" onclick="copyToClipboard();">
+                <span class="tooltip" aria-label="Copy Query URL to clipboard" style="left: 50%;">
+                   <svg class="octicon octicon-clippy" viewBox="0 0 14 16" version="1.1" width="28" height="32" aria-hidden="true"><path fill-rule="evenodd" d="M2 13h4v1H2v-1zm5-6H2v1h5V7zm2 3V8l-3 3 3 3v-2h5v-2H9zM4.5 9H2v1h2.5V9zM2 12h2.5v-1H2v1zm9 1h1v2c-.02.28-.11.52-.3.7-.19.18-.42.28-.7.3H1c-.55 0-1-.45-1-1V4c0-.55.45-1 1-1h3c0-1.11.89-2 2-2 1.11 0 2 .89 2 2h3c.55 0 1 .45 1 1v5h-1V6H1v9h10v-2zM2 5h8c0-.55-.45-1-1-1H8c-.55 0-1-.45-1-1s-.45-1-1-1-1 .45-1 1-.45 1-1 1H3c-.55 0-1 .45-1 1z"></path></svg>                   
+                </span>
+            </div>
+            <div class="col-sm-11">
+                <input id="qurl" style="width:100%"></input>
+            </div>
+        </div>        
+    </div>
+</body>
+<script>
+
+
+    let zoom_level = 5;
+    let urlparts = unescape(location.pathname).split("/");
+    let urllen = urlparts.length;
+    let collection = urlparts[urllen - 2];
+    document.getElementById('col_title').innerText =  urlparts[urllen - 2] + " instance of " + "Collection: " + urlparts[urllen - 3];
+    let ispoint = false;
+    let ispolygon = false;
+    let map_center = [42, -100]
+    let httpRequest;
+    let capsJSON;
+
+    let errmsg = ""
+
+    function copyToClipboard() {
+        let copyText = document.querySelector("#qurl");
+        copyText.select();
+        document.execCommand("copy");
+    }
+
+    function getData() {
+        if (urlparts[urllen-1] == "point") {
+            getPointQuery();
+        } else if (urlparts[urllen-1] == "polygon") {
+            getPolygonQuery()
+        }
+    }
+
+    function createFormGroup(labelId,label,impType,col1,col2,name) {
+
+        html_block = '<div class="row"><div class="col-sm-'+col1+'"><label>'+label+'</label></div>';
+        html_block += '<div class="col-sm-'+col2+'"><input type="'+impType+'" id="'+labelId+'" name="'+name+'" /></div></div>';
+        return html_block;                                   
+    }
+
+    function createTimeGroup(timeValues) {
+        let html_block = '<div class="row"><div class="container"><div class="row">';
+        html_block += '<div class="col-sm-6"><label>Start time</label></div>';
+        html_block += '<div class="col-sm-6"><label>End time</label></div></div>';
+        html_block += '<div class="row"><div class="col-sm-6">';
+        let times_block = '';
+        for (let timeIndex in timeValues) {
+            times_block += '<option>'+timeValues[timeIndex]+'</option>';
+        }
+        html_block += '<select type="text" id="starttime">' + times_block + '</select>'
+        html_block += '</div><div class="col-sm-6">';
+        html_block += '<select type="text" id="endtime">' + times_block + '</select>'
+        html_block += '</div></div></div></div>'
+        return html_block;
+    }
+
+    function createSelectGroup(groupName, selectValues) {
+        let html_block = '<div class="row"><div class="col-sm-4"><label>'+groupName+'</label></div><div class="col-sm-8"><select type="text" id="'+groupName+'">';
+        for (let selIndex in selectValues) {
+            html_block += '<option>'+selectValues[selIndex]+'</option>';
+        }
+        html_block += '</select></div></div>';
+        return html_block;
+    }
+
+    function makeRequest() {
+        httpRequest = new XMLHttpRequest();
+
+        if (!httpRequest) {
+            alert('Giving up :( Cannot create an XMLHTTP instance');
+            return false;
+        }
+        httpRequest.onreadystatechange = capsContents;
+        httpRequest.open('GET', location.pathname.replace(urlparts[urllen - 1],'').replace(urlparts[urllen - 2]+"//",'')+'?outputFormat=application/json');
+        httpRequest.send();
+        document.getElementById("loading_wheel").style.cssText = "display:inline;left:50%;top:50%;width:35px;height:35px;z-index:10000;position:absolute;";
+    }
+
+    function capsContents() {
+        if (httpRequest.readyState === XMLHttpRequest.DONE) {
+            if (httpRequest.status === 200) {
+                let newHTML = createFormGroup('coords','coordinates','text',3,9,"coords");
+                capsJSON = JSON.parse(httpRequest.responseText);
+                document.getElementById('formlegend').innerText = urlparts[urllen-1] + " query";
+                document.getElementById('col_title').innerText =  urlparts[urllen - 2] + " instance of " + "Collection: " + capsJSON['title'];
+                form_block = document.getElementById('formfields')
+                newHTML += '<div class="bordered" id="pnames" >';
+                fp = ""
+                for (let p in capsJSON.parameters) {
+                    fp = p
+                    newHTML += createFormGroup(p,p.replace("_"," "),"checkbox",8,4,"parametername");
+                }
+                newHTML += '</div>';
+                if (capsJSON.parameters[fp].extent.temporal !== undefined) {
+                    newHTML += '<div class="bordered" >';
+                    newHTML += createTimeGroup(capsJSON.parameters[fp].extent.temporal.range);
+                    newHTML += '</div>';
+
+                }
+                newHTML += '<div class="row"><div class="col-sm-4"><label>outputCRS</label></div>';
+                newHTML += '<div class="col-sm-8"><select type="text" id="crs">';
+
+                for (let crsIdx in capsJSON.outputCRS) {
+                    newHTML += '<option>'+capsJSON.outputCRS[crsIdx].id+'</option>';
+                }                
+                newHTML += '</select></div></div>'
+                if ((capsJSON.parameters[fp].extent.vertical !== undefined) && (capsJSON.parameters[fp].extent.vertical.range.length > 0)) {
+                    newHTML += createSelectGroup('z-coord', capsJSON.parameters[fp].extent.vertical.range);
+                }
+
+                if (urlparts[urllen-1] == "point") {
+                    if (capsJSON.pointQueryOptions !== undefined) {
+                        newHTML += createSelectGroup('interpolation', capsJSON.pointQueryOptions.interpolation);
+                    }
+                } else if (urlparts[urllen-1] == "polygon") {
+                    if (capsJSON.polygonQueryOptions !== undefined) {
+                        newHTML += createSelectGroup('interpolationX', capsJSON.polygonQueryOptions.interpolationX);
+                        newHTML += createSelectGroup('interpolationY', capsJSON.polygonQueryOptions.interpolationY);
+                    }
+                }
+                newHTML += createSelectGroup('outputFormat', capsJSON.outputFormat);
+                
+                form_block.innerHTML = newHTML;
+                document.getElementById("loading_wheel").style.cssText = "display:none;";                
+                
+            } else {
+                document.getElementById("loading_wheel").style.cssText = "display:none;";
+                alert('There was a problem with retrieving the metadata.');
+            }
+        }
+    }
+
+    makeRequest();
+
+    function getPointQuery() {
+        document.getElementById("loading_wheel").style.cssText = "display:inline;left:50%;top:50%;width:35px;height:35px;z-index:10000;position:absolute;";
+        removeLayers();  
+        let query_url = location.pathname
+        let valid_url = true;
+        if ((document.getElementById('coords')!== null) && (document.getElementById('coords').value.length > 0)) {
+            query_url +='?coords=' + document.getElementById('coords').value;
+        } else {
+            alert ("Please select a location (click marker icon on left handside of the map then click on your required location to generate the coordinates)");
+            valid_url = false;
+        }
+        let paramOpts = document.getElementsByName("parametername");
+        let parameterName = "";
+        let delim = "";
+        for (let p of paramOpts) {
+            if (p.checked == true)
+            {
+                parameterName += delim + p.id;
+                delim = ",";
+            }
+        }
+        if (parameterName.length == 0 ) {
+            valid_url = false;
+            alert("Please select at least one parameter to query");
+        } else {
+            query_url += "&parametername="+ parameterName;
+        }
+
+        if (document.getElementById('starttime') !== null) {
+            if (new Date(document.getElementById('starttime').value) > new Date(document.getElementById('endtime').value)) {
+                alert("End date must be greater or equal to the Start date of the query");
+                valid_url = false;
+            } else if (document.getElementById('starttime').value == document.getElementById('endtime').value) {
+                query_url += "&time=" + document.getElementById('starttime').value;
+            } else {
+                query_url += "&time=" + document.getElementById('starttime').value + "/" + document.getElementById('endtime').value;
+            }
+        }
+        if (document.getElementById('z-coord') !== null ) {
+            query_url += "&Z=" +  document.getElementById('z-coord').value;
+        }
+        if (document.getElementById('crs').value.length > 0) {
+            query_url += "&outputCRS=" +  document.getElementById('crs').value;
+        }
+
+        if (document.getElementById('interpolation').value.length > 0) {
+            query_url += "&interpolation=" +  document.getElementById('interpolation').value;
+        }
+        if (document.getElementById('outputFormat').value.length > 0) {
+            query_url += "&outputFormat=" +  document.getElementById('outputFormat').value;
+        }
+        let port = location.port;
+        if ( port.length > 0) {
+            port = ":" + port;
+        }
+        document.getElementById("qurl").value = location.protocol + "//" + location.hostname + port + query_url;
+        if (valid_url) {        
+            fetch(query_url)
+            .then(function (response) {
+                return response.json()
+            }).then(function (output) {
+                
+                CovJSON.read(output).then(function (cov) {
+                    document.getElementById("loading_wheel").style.cssText = "display:none;";                  
+                    if (isTimeSeries(cov)) {
+                        let popup = (new C.TimeSeriesPlot(cov)).setLatLng([cov._covjson.domain.axes.y.values[0], cov._covjson.domain.axes.x.values[0]]).openOn(map);
+                    }
+                    else {
+                        console.log('Coverage loaded: ', cov)
+                        document.getElementById("loading_wheel").style.cssText = "display:none;";
+                        // add each parameter as a layer
+                        let firstLayer;
+
+                        let layerClazz = C.dataLayerClass(cov)
+
+                        if (cov.coverages && !layerClazz) {
+                            // generic collection
+                            if (!cov.parameters) {
+                                errmsg = "No data found"
+                                throw new Error('Only coverage collections with a "parameters" property are supported')
+                            }
+
+                            for (let key of cov.parameters.keys()) {
+                                let layers = cov.coverages
+                                    .filter(coverage => coverage.parameters.has(key))
+                                    .map(coverage => createLayer(coverage, { keys: [key] }))
+                                layers.forEach(covlayer => map.fire('covlayercreate', { layer: covlayer }))
+                                let layer = L.layerGroup(layers)
+                                layersInControl.add(layer)
+
+                                layerControl.addOverlay(layer, key)
+                                if (!firstLayer) {
+                                    firstLayer = layer
+
+                                    // the following piece of code should be easier
+                                    // TODO extend layer group class in leaflet-coverage (like PointCollection) to provide single 'add' event
+                                    let addCount = 0
+                                    for (let l of layers) {
+                                        l.on('afterAdd', () => {
+                                            coverageLayersOnMap.add(l)
+                                            ++addCount
+                                            if (addCount === layers.length) {
+                                                zoomToLayers(layers)
+                                                // FIXME is this the right place?? define event semantics!
+                                                map.fire('covlayeradd', { layer: l })
+                                            }
+                                        })
+                                    }
+                                }
+                            }
+                        } else if (layerClazz) {
+                            // single coverage or a coverage collection of a specific domain type
+
+                            for (let key of cov.parameters.keys()) {
+                                let opts = { keys: [key] }
+                                let layer = createLayer(cov, opts)
+                                map.fire('covlayercreate', { layer })
+                                layersInControl.add(layer)
+
+                                layerControl.addOverlay(layer, key)
+                                if (!firstLayer) {
+                                    firstLayer = layer
+                                    layer.on('afterAdd', () => {
+                                        zoomToLayers([layer])
+                                        if (!cov.coverages) {
+                                            if (isVerticalProfile(cov) || isTimeSeries(cov)) {
+                                                layer.openPopup()
+                                            }
+                                        }
+                                    })
+                                }
+                                layer.on('afterAdd', () => {
+                                    coverageLayersOnMap.add(layer)
+                                    map.fire('covlayeradd', { layer })
+                                }).on('remove', () => {
+                                    coverageLayersOnMap.delete(layer)
+                                    map.fire('covlayerremove', { layer })
+                                })
+                            }
+                        } else {
+                            throw new Error('unsupported type')
+                        }
+                        try {
+                            if (options.display && firstLayer) {
+                            map.addLayer(firstLayer)
+                        } 
+                        }catch {
+
+                        }
+                       
+                    }
+                }).catch(function (e) {
+                    // there was an error when loading the coverage
+                    document.getElementById("loading_wheel").style.cssText = "display:none;";
+
+                    alert('error loading data: ' + errmsg)
+                    console.log(e)
+                })
+            }).catch(function (error) {
+                document.getElementById("loading_wheel").style.cssText = "display:none;";
+                alert('error loading data: ' + error.message)
+                console.log('There has been a problem with your fetch operation: ', error.message);
+            });
+        }
+        else {
+            document.getElementById("loading_wheel").style.cssText = "display:none;";
+        }        
+    }
+
+
+
+    function getPolygonQuery() {
+
+        removeLayers();   
+        document.getElementById("loading_wheel").style.cssText = "display:inline;left:50%;top:50%;width:35px;height:35px;z-index:10000;position:absolute;";
+
+        let query_url = location.pathname
+        let valid_url = true;
+        if ((document.getElementById('coords')!== null) && (document.getElementById('coords').value.length > 0)) {
+            query_url +='?coords=' + document.getElementById('coords').value;
+        } else {
+            alert ("Please define the area (click polygon icon on left handside of the map then click on your required vertices to generate the coordinates)");
+            valid_url = false;
+        }
+        let paramOpts = document.getElementsByName("parametername");
+        let parameterName = "";
+        let delim = "";
+        for (let p of paramOpts) {
+            if (p.checked == true)
+            {
+                parameterName += delim + p.id;
+                delim = ",";
+            }
+        }
+        if (parameterName.length == 0 ) {
+            valid_url = false;
+            alert("Please select at least one parameter to query");
+        } else {
+            query_url += "&parametername="+ parameterName;
+        }
+
+        if (document.getElementById('starttime') !== null) {
+            if (new Date(document.getElementById('starttime').value) > new Date(document.getElementById('endtime').value)) {
+                alert("End date must be greater or equal to the Start date of the query");
+                valid_url = false;
+            } else if (new Date(document.getElementById('starttime').value) == new Date(document.getElementById('endtime').value)) {
+                query_url += "&time=" + document.getElementById('starttime').value;
+            } else {
+                query_url += "&time=" + document.getElementById('starttime').value + "/" + document.getElementById('endtime').value;
+            }
+        }
+        if (document.getElementById('z-coord') !== null ) {
+            query_url += "&Z=" +  document.getElementById('z-coord').value;
+        }
+
+        if (document.getElementById('crs').value.length > 0) {
+            query_url += "&outputCRS=" +  document.getElementById('crs').value;
+        }
+        if (document.getElementById('interpolationX').value.length > 0) {
+            query_url += "&interpolationX=" +  document.getElementById('interpolationX').value;
+        }
+        if (document.getElementById('interpolationY').value.length > 0) {
+            query_url += "&interpolationY=" +  document.getElementById('interpolationY').value;
+        }
+        if (document.getElementById('outputFormat').value.length > 0) {
+            query_url += "&outputFormat=" +  document.getElementById('outputFormat').value;
+        }
+        let port = location.port;
+        if ( port.length > 0) {
+            port = ":" + port;
+        }
+        document.getElementById("qurl").value = location.protocol + "//" + location.hostname + port + query_url;
+
+        if (valid_url) {        
+            fetch(query_url)
+                .then(function (response) {
+                    return response.json()
+                }).then(function (output) {
+                    CovJSON.read(output).then(function (cov) {
+                        options = {}
+                        console.log('Coverage loaded: ', cov)
+                        document.getElementById("loading_wheel").style.cssText = "display:none;";
+                        // add each parameter as a layer
+                        let firstLayer;
+
+                        let layerClazz = C.dataLayerClass(cov)
+
+                        if (cov.coverages && !layerClazz) {
+                            // generic collection
+                            if (!cov.parameters) {
+                                errmsg = "No data found"
+                                throw new Error('Only coverage collections with a "parameters" property are supported')
+                            }
+
+                            for (let key of cov.parameters.keys()) {
+                                let layers = cov.coverages
+                                    .filter(coverage => coverage.parameters.has(key))
+                                    .map(coverage => createLayer(coverage, { keys: [key] }))
+                                layers.forEach(covlayer => map.fire('covlayercreate', { layer: covlayer }))
+                                let layer = L.layerGroup(layers)
+                                layersInControl.add(layer)
+
+                                layerControl.addOverlay(layer, key)
+                                if (!firstLayer) {
+                                    firstLayer = layer
+
+                                    // the following piece of code should be easier
+                                    // TODO extend layer group class in leaflet-coverage (like PointCollection) to provide single 'add' event
+                                    let addCount = 0
+                                    for (let l of layers) {
+                                        l.on('afterAdd', () => {
+                                            coverageLayersOnMap.add(l)
+                                            ++addCount
+                                            if (addCount === layers.length) {
+                                                zoomToLayers(layers)
+                                                // FIXME is this the right place?? define event semantics!
+                                                map.fire('covlayeradd', { layer: l })
+                                            }
+                                        })
+                                    }
+                                }
+                            }
+                        } else if (layerClazz) {
+                            // single coverage or a coverage collection of a specific domain type
+
+                            for (let key of cov.parameters.keys()) {
+                                let opts = { keys: [key] }
+                                let layer = createLayer(cov, opts)
+                                map.fire('covlayercreate', { layer })
+                                layersInControl.add(layer)
+
+                                layerControl.addOverlay(layer, key)
+                                if (!firstLayer) {
+                                    firstLayer = layer
+                                    layer.on('afterAdd', () => {
+                                        zoomToLayers([layer])
+                                        if (!cov.coverages) {
+                                            if (isVerticalProfile(cov) || isTimeSeries(cov)) {
+                                                layer.openPopup()
+                                            }
+                                        }
+                                    })
+                                }
+                                layer.on('afterAdd', () => {
+                                    coverageLayersOnMap.add(layer)
+                                    map.fire('covlayeradd', { layer })
+                                }).on('remove', () => {
+                                    coverageLayersOnMap.delete(layer)
+                                    map.fire('covlayerremove', { layer })
+                                })
+                            }
+                        } else {
+                            throw new Error('unsupported type')
+                        }
+                        if (options.display && firstLayer) {
+                            map.addLayer(firstLayer)
+                        }
+                    });
+                }).catch(function (error) {
+                    document.getElementById("loading_wheel").style.cssText = "display:none;";
+                    alert('error loading data: ' + error.message)
+                    console.log('There has been a problem with your fetch operation: ', error.message);
+                });
+
+
+        } 
+        else {
+            document.getElementById("loading_wheel").style.cssText = "display:none;";
+        }        
+    }
+
+
+
+    if (urlparts[urllen-3].toLowerCase().indexOf('uk') > -1) {
+        map_center = [53.5, -2]
+    } 
+
+    if (urlparts[urllen-1] == 'point') {
+        ispoint = true;
+    }
+    else if (urlparts[urllen-1] == 'polygon') {
+        ispolygon = true;
+        zoom_level = 9;
+    }
+    let map = L.map('map', { center: map_center, zoom: zoom_level })
+    let layer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
+    let drawnItems = L.featureGroup().addTo(map);
+    let wkt = new Wkt.Wkt();
+    layer.addTo(map);
+    drawnItems.addTo(map);
+    map.addControl(new L.Control.Draw({
+        draw: {
+            circle: false,
+            rectangle: false,
+            polyline: false,
+            circlemarker: false,
+            marker: ispoint,
+            polygon: ispolygon
+        },
+        edit: {
+            featureGroup: drawnItems,
+            edit: false
+        }
+    }));
+
+    map.on(L.Draw.Event.DRAWSTART, function (event) {
+        drawnItems.clearLayers();
+    });
+    let validQ = true;
+    map.on(L.Draw.Event.CREATED, function (event) {
+        let layer = event.layer;
+        let type = event.layerType
+        if (type === 'marker') {
+            // Do marker specific actions
+            layer.setLatLng(layer.getLatLng().wrap())
+            coords = wkt.read(JSON.stringify(layer.toGeoJSON()));
+
+        }
+        else if (type === 'polygon') {
+            removeLayers();            
+            validQ = true;
+            coords = wkt.read(JSON.stringify(wrapLatLons(layer).toGeoJSON()));
+            area = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0])
+
+            if ((area > 3100000000000) && ((urlparts[urllen - 3]).indexOf("global") > -1))  {
+                alert("Sorry this the selected area is too large (this is to protect the third party datasource), please select an area of approximatley half the size of the US or less")
+                validQ = false;
+            }
+            if ((area > 128000000000) && ((urlparts[urllen - 3]).indexOf("ukv") > -1))  {
+                alert("Sorry this the selected area is too large (this is to protect the third party datasource), please select an area of approximatley half the size of the UK or less")
+                validQ = false;
+            }
+            if ((area > 17000000) && ((urlparts[urllen - 3]).indexOf("osm") > -1))  {
+                alert("Sorry this the selected area is too large (the generic nature of the client means is struggles to render large amounts of vector data), please select an area equivalent of a village or less")
+                validQ = false;
+            }
+            if ((area > 930000000) && ((urlparts[urllen - 3]).indexOf("dem") > -1))  {
+                alert("Sorry this the selected area is too large (this is to protect the third party datasource), please select an area of approximatley quarter a degree square or less")
+                validQ = false;
+            }            
+
+            
+
+        }
+        if (validQ) {
+            document.getElementById('coords').value = coords.write();        
+            drawnItems.addLayer(layer);
+        }
+    });
+
+
+    let layerControl = L.control.layers([], [], { collapsed: false }).addTo(map)
+
+    // We use ParameterSync here so that multiple coverage layers that display the same
+    // parameter get synchronized in terms of their palette and extent.
+    // It also allows us to display a single legend only.
+    // Layers that don't have a single parameter get ignored automatically.
+    let paramSync = new C.ParameterSync({
+        syncProperties: {
+            palette: (p1, p2) => p1,
+            paletteExtent: (e1, e2) => e1 && e2 ? [Math.min(e1[0], e2[0]), Math.max(e1[1], e2[1])] : null
+        }
+    }).on('parameterAdd', e => {
+        // The virtual sync layer proxies the synced palette, paletteExtent, and parameter.
+        // The sync layer will fire a 'remove' event if all real layers for that parameter were removed.
+        let layer = e.syncLayer
+        if (layer.palette) {
+            C.legend(layer, {
+                position: 'bottomright'
+            }).addTo(map)
+        }
+    })
+
+    let layersInControl = new Set()
+    let coverageLayersOnMap = new Set()
+
+    function removeLayers() {
+        for (let layer of layersInControl) {
+            layerControl.removeLayer(layer)
+            if (map.hasLayer(layer)) {
+                // FIXME leaflet's internal state breaks if layers or controls throw exceptions in onAdd()
+                // -> could be prevented by linting CovJSON before-hand
+                try {
+                    map.removeLayer(layer)
+                } catch (e) { }
+            }
+        }
+        layersInControl = new Set()
+    }
+
+    // Wire up coverage value popup
+    let valuePopup = new C.DraggableValuePopup({
+    className: 'leaflet-popup-draggable',
+    layers: [...coverageLayersOnMap]
+    })
+    function zoomToLayers(layers) {
+        let bnds = layers.map(l => l.getBounds())
+        let lproj = layers.map(l => l.domain.referencing[0].system.id)
+        let bounds;
+        if (lproj[0].indexOf("EPSG/0/4326") > -1)
+        {
+            bounds = L.latLngBounds([L.latLng(bnds[0].getWest(),bnds[0].getSouth()),L.latLng(bnds[0].getEast(),bnds[0].getNorth())])
+        }
+        else {
+            bounds = L.latLngBounds(bnds)
+        }
+        let opts;
+        if (bounds.getWest() === bounds.getEast() && bounds.getSouth() === bounds.getNorth()) {
+            opts = { maxZoom: 5 }
+        }
+        map.fitBounds(bounds, opts)
+    }
+
+    function isVerticalProfile(cov) {
+        return cov.domainType === C.COVJSON_VERTICALPROFILE
+    }
+
+    function isTimeSeries(cov) {
+        return cov.domainType === C.COVJSON_POINTSERIES || cov.domainType === C.COVJSON_POLYGONSERIES
+    }
+
+    function createLayer(cov, opts) {
+        let layer = C.dataLayer(cov, opts).on('afterAdd', e => {
+            let covLayer = e.target
+            console.log('layer added:', covLayer)
+
+            // This registers the layer with the sync manager.
+            // By doing that, the palette and extent get unified (if existing)
+            // and an event gets fired if a new parameter was added.
+            // See the code above where ParameterSync gets instantiated.
+            paramSync.addLayer(covLayer)
+
+            if (!cov.coverages) {
+                if (covLayer.time) {
+                    new C.TimeAxis(covLayer).addTo(map)
+                }
+                if (covLayer.vertical) {
+                    new C.VerticalAxis(covLayer).addTo(map)
+                }
+            }
+        }).on('dataLoad', () => map.fire('dataload'))
+            .on('dataLoading', () => map.fire('dataloading'))
+        layer.on('axisChange', () => {
+            layer.paletteExtent = 'subset'
+        })
+
+        if (cov.coverages) {
+            if (isVerticalProfile(cov)) {
+                layer.bindPopupEach(coverage => new C.VerticalProfilePlot(coverage))
+            } else if (isTimeSeries(cov)) {
+                layer.bindPopupEach(coverage => new C.TimeSeriesPlot(coverage))
+            }
+        } else {
+            if (isVerticalProfile(cov)) {
+                layer.bindPopup(new C.VerticalProfilePlot(cov))
+            } else if (isTimeSeries(cov)) {
+                layer.bindPopup(new C.TimeSeriesPlot(cov))
+            }
+        }
+
+        return layer
+    }
+
+    function wrapLatLons(inLayer) {
+        let lls = inLayer.getLatLngs()[0];
+        for (lLoop=0; lLoop < lls.length; lLoop++)
+        {
+            lls[lLoop] = lls[lLoop].wrap();
+        }
+        return inLayer.setLatLngs([lls]);        
+    }
+
+    // click event needed for Grid layer (can't use bindPopup there)
+    map.on('singleclick', e => {
+    valuePopup.setLatLng(e.latlng).openOn(map)
+    })
+    map.on('covlayercreate', e => {
+    // some layers already have a plot popup bound to it, ignore those
+    if (!e.layer.getPopup()) {
+        e.layer.bindPopup(valuePopup)
+    }
+    })
+    map.on('covlayeradd', e => {
+    valuePopup.addCoverageLayer(e.layer)
+    })
+    map.on('covlayerremove', e => {
+    valuePopup.removeCoverageLayer(e.layer)
+    })    
+</script>
+
+</html>
