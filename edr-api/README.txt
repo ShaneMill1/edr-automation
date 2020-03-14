@@ -3,18 +3,17 @@ The ingest currently available are for 1.00, 0.50, and 0.25 degree GFS and 32km 
 To perform the ingest, you will need to /bin/bash into the running docker container:
 docker exec -it <containerID> /bin/bash
 
-From the / Directory:
-
+From the / Directory: \n
 Commands for GFS, using 00z run as an example. (Can use 00z, 06z, 12z, 18z)
-1.00 Degree GFS
+- 1.00 Degree GFS
 /usr/local/bin/python /automated_scripts/create_collections.py gfs_100 00z /media/sf_Transfer/WoW_Data/
 
-0.50 Degree GFS
+- 0.50 Degree GFS
 /usr/local/bin/python /automated_scripts/create_collections.py gfs_050 00z /media/sf_Transfer/WoW_Data/
 
-0.25 Degree GFS
+- 0.25 Degree GFS
 /usr/local/bin/python /automated_scripts/create_collections.py gfs_025 00z /media/sf_Transfer/WoW_Data/
 
 Command for the NAM, using 00z run as an example. (Can use 00z, 06z, 12z, 18z)
-32km Nam
+- 32km Nam
 /usr/local/bin/python /automated_scripts/create_collections.py nam_32km 00z /media/sf_Transfer/WoW_Data/
