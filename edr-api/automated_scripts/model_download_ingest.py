@@ -47,7 +47,7 @@ def model_ingest(cycle,model,ingest_path):
          if '.pgrb2.0p25' in e.text and '.idx' not in e.text and '.anl' not in e.text:
             fn=url_dir+e.text
             dir_list.append(fn)       
-   if model=='nam':
+   if model=='nam_32km':
       for e in dir_s.find_all('a'):
          if '.t'+cycle in e.text and 'awip32' in e.text and '.idx' not in e.text and '.anl' not in e.text and 'bufr' not in e.text:
             fn=url_dir+e.text
