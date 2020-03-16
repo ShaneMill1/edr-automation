@@ -1,5 +1,7 @@
-The ingest currently available are for 1.00, 0.50, and 0.25 degree GFS and 32km NAM
+The following will locally download the grib files for the associated model run, aggregate the collections of
+parameters based on common dimensions, and create the zarr datastores for the EDR to access.
 
+The ingest currently available are for 1.00, 0.50, and 0.25 degree GFS and 32km NAM
 To perform the ingest, you will need to /bin/bash into the running docker container:
 docker exec -it <containerID> /bin/bash
 
