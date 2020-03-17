@@ -1,5 +1,5 @@
 # edr-automation
-This is a lean version of the Environmental Data Retrieval API to test grib ingestion
+This is an implementation of the Environmental Data Retrieval API to test grib ingestion
 
 Navigate to edr-api. In the docker.cmd file, you will need to change the volume path to a path on the local host system where
 data will be stored. I recommend it being outside of the file path that contains the Dockerfile so that when you rebuild 
