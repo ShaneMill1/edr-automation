@@ -11,7 +11,7 @@ RUN apt-get update && apt-get -y install vim curl bzip2 libzstd-dev libssl-dev l
     && conda clean --all --yes
 
 ENV PATH /opt/conda/bin:$PATH
-RUN conda install -c conda-forge libiconv requests flask flask-cors click pyyaml unicodecsv xarray dask netCDF4 bottleneck 
+RUN conda install -c conda-forge libiconv requests flask flask-cors click pyyaml unicodecsv xarray=0.14.1 dask netCDF4 bottleneck 
 RUN conda install -c conda-forge dicttoxml pynio pyproj metpy xmltodict shapely fiona regionmask zarr gdal
 RUN conda install -c conda-forge python-eccodes pandas bs4 python-wget  
 
