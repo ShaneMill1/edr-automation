@@ -25,6 +25,12 @@ groups:
             - automated_gfs
             - automated_nam
 
+    Canadian_Models:
+        type: group
+        name: Canadian Models
+        desc: Automated Ingestion
+        children:
+            - automated_gem
 
 metadata:
     registry_db: WoW/WMO.sqlite    
@@ -110,3 +116,27 @@ datasets:
             model: [nam_32km]
             cycle: [00z,06z,12z,18z]
             data_source: /media/sf_Transfer/WoW_Data/collections
+    automated_gem:
+        name: gem automated
+        title: gem automated
+        description: gem automated
+        extent:
+            spatial: -180,-89.9,180,89.9
+        instanceAxes:
+            x:
+                label: Longitude
+                lowerBound: -180
+                upperBound: 180
+                uomLabel: degrees
+            y:
+                label: Latitude
+                lowerBound: -89.9
+                upperBound: 89.9
+                uomLabel: degrees
+        provider:
+            name: automated_gem
+            type: automated_ingest
+            model: [gem_25km]
+            cycle: [00z,06z,12z,18z]
+            data_source: /media/sf_Transfer/WoW_Data/collections
+
