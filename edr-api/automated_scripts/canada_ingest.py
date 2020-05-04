@@ -26,7 +26,7 @@ def model_ingest(cycle,model,ingest_path):
    os.makedirs(cycle_dir)
    model_short=model.split('_')[0]
    cycle=cycle.strip('z')
-   if model=='gem_global_25km':
+   if model=='gem_25km':
       url_dir='https://dd.weather.gc.ca/model_gem_global/25km/grib2/lat_lon/'+cycle+'/'
    print(url_dir)
    response = requests.get(url_dir)
@@ -34,7 +34,7 @@ def model_ingest(cycle,model,ingest_path):
    dir_s = BeautifulSoup(response.text, 'html.parser')
    dir_list=list()
    data_dir = cycle_dir+'/'
-   if model=='gem_global_25km':
+   if model=='gem_25km':
       for e in dir_s.find_all('a')[5:]:
          forecast_hour=e.get('href')
          url=url_dir+forecast_hour
@@ -55,4 +55,4 @@ def model_ingest(cycle,model,ingest_path):
    return 'finished downloading '+ cycle
 
 if __name__ == "__main__":
-   model_ingest('00z','gem_global','./data/')
+   model_ingest('00z','gem_25km','./data/')

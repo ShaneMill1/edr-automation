@@ -1,4 +1,4 @@
-#!/home/MDL/smill/miniconda3/envs/search_engine/bin/python3
+#!/usr/local/bin/python
 # =================================================================
 #
 # Authors: Shane Mill <shane.mill@noaa.gov>
@@ -45,7 +45,7 @@ import xarray as xr
 
 def download_data(model,cycle,ingest_path):
    #downloads model data into ./data_ingest directory
-   if 'gem_global' in model:
+   if 'gem_' in model:
       ds=canada_ingest.model_ingest(cycle,model,ingest_path)
    else:
       ds=model_download_ingest.model_ingest(cycle,model,ingest_path)

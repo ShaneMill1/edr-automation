@@ -40,7 +40,7 @@ PROVIDERS = {
     'thredds': 'WoW.provider.thredds.ThreddsProvider',
     'automated_gfs': 'WoW.provider.automated_gfs.AutomatedCollectionProvider',
     'automated_nam': 'WoW.provider.automated_nam.AutomatedCollectionProvider',
-    'automated_nam': 'WoW.provider.automated_gem.AutomatedCollectionProvider'
+    'automated_gem': 'WoW.provider.automated_gem.AutomatedCollectionProvider'
 
 }
 
