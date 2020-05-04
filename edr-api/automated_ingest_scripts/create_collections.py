@@ -1,4 +1,4 @@
-
+#!/home/MDL/smill/miniconda3/envs/search_engine/bin/python3
 # =================================================================
 #
 # Authors: Shane Mill <shane.mill@noaa.gov>
@@ -27,16 +27,16 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 #
 # =================================================================
-
-
-
 import argparse
 from collections import OrderedDict
 import datetime
 import model_download_ingest
+import math
+import canada_ingest
 import glob
 import json
 import os
+import multiprocessing
 import numpy as np
 import pandas as pd
 import re
@@ -45,7 +45,10 @@ import xarray as xr
 
 def download_data(model,cycle,ingest_path):
    #downloads model data into ./data_ingest directory
-   ds=model_download_ingest.model_ingest(cycle,model,ingest_path)
+   if 'gem_global' in model:
+      ds=canada_ingest.model_ingest(cycle,model,ingest_path)
+   else:
+      ds=model_download_ingest.model_ingest(cycle,model,ingest_path)
 
 
 def create_all_grb(model,cycle,ingest_path):
@@ -60,6 +63,7 @@ def create_all_grb(model,cycle,ingest_path):
    for f in path:
       shutil.copyfileobj(open(f,'rb'),all_grb)
    all_grb.close()
+   return
 
 
 def create_model_csv(model,cycle,ingest_path):
@@ -155,8 +159,6 @@ def create_collections(model,cycle,ingest_path):
    dim_cols=['dim_name','dim_val']
    dim_df=pd.read_csv(model_dir+dim_file,names=dim_cols)
    dim_name=dim_df['dim_name']
-   #had to add the iloc for docker environment... comment out if not in docker
-   dim_name=dim_name.iloc[1:]
    dim_df['dim_val']=dim_df['dim_val'].str.replace('\n','')
    dim_df['dim_val']=dim_df['dim_val'].str.replace('[','')
    dim_df['dim_val']=dim_df['dim_val'].str.replace(']','')
@@ -165,15 +167,20 @@ def create_collections(model,cycle,ingest_path):
    dim_value=dim_df['dim_val']
    dim_lookup=pd.Series(dim_df.dim_val.values,index=dim_df.dim_name).to_dict()
    df_2=pd.read_csv(model_dir+group_file)
+   d_list=list()
    for d in dim_name:
-      df_2[d]=df_2[d].astype('str')
-      df_2[d]=df_2[d].str.replace("]","")
-      df_2[d]=df_2[d].str.replace("[","")
-      df_2[d]=df_2[d].str.replace("'","")
-      df_2[d]=df_2[d].str.replace("'","")
-      df_2[d]=df_2[d].astype('str')
-      df_2[d]=df_2[d].map(dim_lookup)
-   dval_df=df_2[dim_name]
+      if type(d)!=str and math.isnan(d)==True:
+         d='unknown_key'
+      else:
+         df_2[d]=df_2[d].astype('str')
+         df_2[d]=df_2[d].str.replace("]","")
+         df_2[d]=df_2[d].str.replace("[","")
+         df_2[d]=df_2[d].str.replace("'","")
+         df_2[d]=df_2[d].str.replace("'","")
+         df_2[d]=df_2[d].astype('str')
+         df_2[d]=df_2[d].map(dim_lookup)
+         d_list.append(d)
+   dval_df=df_2[d_list]
    cols=list(df.columns) 
    cols.insert(0, cols.pop(cols.index('parameters')))
    cols.insert(1, cols.pop(cols.index('long_name')))
@@ -237,13 +244,26 @@ def convert_to_zarr(model,cycle,ingest_path):
    ds_f=ingest_path+'/'+cycle+'_'+model+'.grb'
    with open(col_json_file) as json_file:
       col_json = json.load(json_file)
-   ds=xr.open_dataset(ds_f,engine='pynio')
+      lat_0_size=len(col_json[0]['lat_0'])
+      lon_0_size=len(col_json[0]['lon_0'])
+   print('chunking dataset by size of lat_0 and lon_0')
+   ds=xr.open_dataset(ds_f,engine='pynio',chunks={'lat_0': lat_0_size,'lon_0': lon_0_size})
+   cpus = multiprocessing.cpu_count()
+   max_pool_size = 6
+   pool = multiprocessing.Pool(cpus if cpus < max_pool_size else max_pool_size)
    for c in col_json:
-      param=c['parameters']
-      param=[s.replace("'","") for s in param]
-      col_ds=ds[param]
-      col_ds.to_zarr(ingest_path+'/zarr/'+c['collection_name'],mode='w')
-      print(c['collection_name']+' converted to zarr')
+      pool.apply_async(to_zarr_pool, args=(ds,ingest_path,c))
+   pool.close()
+   pool.join()
+   return
+
+def to_zarr_pool(ds,ingest_path,c):
+   param=c['parameters']
+   param=[s.replace("'","") for s in param]
+   col_ds=ds[param]
+   col_ds=col_ds
+   col_ds.to_zarr(ingest_path+'/zarr/'+c['collection_name'],mode='w',compute=False)
+   print(c['collection_name']+' converted to zarr')
    return
 
 if __name__ == "__main__":

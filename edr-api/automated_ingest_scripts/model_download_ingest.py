@@ -1,33 +1,3 @@
-# =================================================================
-#
-# Authors: Shane Mill <shane.mill@noaa.gov>
-#
-# Copyright (c) 2019 Shane Mill - National Weather Service
-#
-# Permission is hereby granted, free of charge, to any person
-# obtaining a copy of this software and associated documentation
-# files (the "Software"), to deal in the Software without
-# restriction, including without limitation the rights to use,
-# copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the
-# Software is furnished to do so, subject to the following
-# conditions:
-#
-# The above copyright notice and this permission notice shall be
-# included in all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
-# OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND   
-# NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT 
-# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
-# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-# OTHER DEALINGS IN THE SOFTWARE.      
-#
-# =================================================================
-
-
 from bs4 import BeautifulSoup
 import cycle_info
 import datetime
@@ -56,7 +26,7 @@ def model_ingest(cycle,model,ingest_path):
    os.makedirs(cycle_dir)
    model_short=model.split('_')[0]
    time_z, url_dir=cycle_info.info(model_short,cycle)
-   print(url_dir)
+   print(url_dir+'/')
    response = requests.get(url_dir)
    print(response)
    dir_s = BeautifulSoup(response.text, 'html.parser')
@@ -95,7 +65,7 @@ def model_ingest(cycle,model,ingest_path):
 
    print('begin downloading '+model+' files for '+cycle)
    cpus = multiprocessing.cpu_count()
-   max_pool_size = 4
+   max_pool_size = 6
    pool = multiprocessing.Pool(cpus if cpus < max_pool_size else max_pool_size)
    for url in dir_list:
       pool.apply_async(model_download, args=(model,url,data_dir))
@@ -104,9 +74,10 @@ def model_ingest(cycle,model,ingest_path):
 
    return 'finished downloading '+ cycle
 
-#if __name__ == "__main__":
+if __name__ == "__main__":
 #   cycle_array=['00z','06z','12z','18z']
 #   for c in cycle_array:
 #      print(c)
 #      model_ingest(c,'hrrr')
+   model_ingest('00z','gfs_100','./data/')
 
