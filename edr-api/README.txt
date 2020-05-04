@@ -6,6 +6,9 @@ To perform the ingest, you will need to /bin/bash into the running docker contai
 docker exec -it <containerID> /bin/bash
 
 From the / Directory:
+Commands for Canadian GEM, using 00z run as an example. (Can use 00z, 12z)
+/usr/local/bin/python /automated_scripts/create_collections.py gem_25km 00z /media/sf_Transfer/WoW_Data/
+
 Commands for GFS, using 00z run as an example. (Can use 00z, 06z, 12z, 18z)
 - 1.00 Degree GFS
 /usr/local/bin/python /automated_scripts/create_collections.py gfs_100 00z /media/sf_Transfer/WoW_Data/
